@@ -10,6 +10,6 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 public class WebApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(SpringApplication.class);
+        SpringApplication.run(WebApplication.class);
     }
 }
