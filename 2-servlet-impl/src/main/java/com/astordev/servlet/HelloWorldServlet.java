@@ -11,6 +11,6 @@ public class HelloWorldServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         resp.setStatus(HttpServletResponse.SC_OK);
         resp.setContentType("text/plain; charset=utf-8");
-        resp.getWriter().println("hello world");
+        resp.getWriter().println("Hello, World!");
     }
 }

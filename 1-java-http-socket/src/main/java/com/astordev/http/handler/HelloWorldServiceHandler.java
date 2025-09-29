@@ -10,6 +10,6 @@ public class HelloWorldServiceHandler implements ServiceHandler {
     public void handle(HttpRequest request, HttpResponse response) throws IOException {
         response.setStatus(200);
         response.addHeader("Content-Type", "text/plain; charset=utf-8");
-        response.getWriter().println("hello world");
+        response.getWriter().println("Hello, World!");
     }
 }
