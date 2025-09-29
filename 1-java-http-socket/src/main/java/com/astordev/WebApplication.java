@@ -13,7 +13,7 @@ import com.astordev.server.handler.ServiceHandler;
  * @see Server
  * @see ServiceHandler
  */
-class Main {
+class WebApplication {
     public static void main(String[] args) {
         ServiceHandler handler = new EchoServiceHandler();
         Server server = new TcpServer(9000, 4, handler);
