@@ -1,14 +1,24 @@
 package com.astordev;
 
-import com.astordev.server.Server;
-import com.astordev.server.TcpServer;
-import com.astordev.server.handler.EchoServiceHandler;
-import com.astordev.server.handler.ServiceHandler;
+import com.astordev.http.HttpServer;
+import com.astordev.http.handler.HelloWorldServiceHandler;
+import com.astordev.http.handler.ServiceHandler;
+
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 class WebApplication {
     public static void main(String[] args) {
-        ServiceHandler handler = new EchoServiceHandler();
-        Server server = new TcpServer(9000, 4, handler);
-        server.run();
+        Map<String, ServiceHandler> handlers = new HashMap<>();
+        handlers.put("/hello", new HelloWorldServiceHandler());
+
+        try {
+            HttpServer server = new HttpServer(8080, handlers);
+            server.start();
+        } catch (IOException e) {
+            System.err.println("Failed to start server");
+            e.printStackTrace();
+        }
     }
 }
