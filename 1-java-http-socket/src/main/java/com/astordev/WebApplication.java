@@ -1,7 +1,7 @@
 package com.astordev;
 
-import com.astordev.http.HttpServer;
 import com.astordev.http.HelloWorldHttpServiceHandler;
+import com.astordev.http.HttpServer;
 import com.astordev.tcp.HelloWorldTcpServiceHandler;
 import com.astordev.tcp.TcpServer;
 
@@ -10,9 +10,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 class WebApplication {
-    enum Mode {
-        HTTP, TCP
-    }
     private final static Mode mode = Mode.TCP;
 
     public static void main(String[] args) {
@@ -37,5 +34,9 @@ class WebApplication {
             System.err.println("Failed to start server");
             e.printStackTrace();
         }
+    }
+
+    enum Mode {
+        HTTP, TCP
     }
 }

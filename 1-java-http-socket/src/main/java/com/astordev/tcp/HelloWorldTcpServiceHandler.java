@@ -11,17 +11,21 @@ public class HelloWorldTcpServiceHandler implements ServiceHandler {
 
     @Override
     public void handle(Socket socket) throws IOException {
-        try (InputStream in = socket.getInputStream()) {
+        try {
+            InputStream in = socket.getInputStream();
             OutputStream out = socket.getOutputStream();
-
             out.write("Hello, World!".getBytes());
-            byte[] buffer = new byte[1024];
+            byte[] buffer = new byte[1024 * 128];
             int bytesRead;
             while ((bytesRead = in.read(buffer)) != -1) {
-                System.out.println(
-                        "[" + socket.getInetAddress().getHostAddress() +
-                                "(" + socket.getPort() + ")]" +
-                                new String(buffer, 0, bytesRead));
+                int maxLength = 50;
+                String content = new String(buffer, 0, bytesRead);
+                if (content.length() > maxLength) {
+                    content = content.substring(0, maxLength) + "...";
+                }
+                System.out.println("[" + socket.getInetAddress().getHostAddress() +
+                        "(" + socket.getPort() + ")] " +
+                        content + " (" + bytesRead + " bytes)");
                 out.write("Hello, World!".getBytes());
             }
             System.out.println("Connection Closed");

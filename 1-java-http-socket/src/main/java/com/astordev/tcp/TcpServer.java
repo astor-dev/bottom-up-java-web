@@ -15,9 +15,9 @@ import java.util.concurrent.Executors;
 public class TcpServer implements Server {
     private final int port;
     private final ServiceHandler serviceHandler;
-    private ServerSocket serverSocket;
     private final List<Socket> clientSockets = Collections.synchronizedList(new ArrayList<>());
     private final ExecutorService executorService = Executors.newCachedThreadPool();
+    private ServerSocket serverSocket;
 
 
     public TcpServer(int port, ServiceHandler serviceHandler) {
@@ -34,10 +34,19 @@ public class TcpServer implements Server {
             while (!Thread.currentThread().isInterrupted()) {
                 Socket clientSocket = serverSocket.accept();
                 clientSockets.add(clientSocket);
-                serviceHandler.handle(clientSocket);
+                executorService.submit(() -> handleClient(clientSocket));
             }
         } finally {
             executorService.shutdown();
+        }
+    }
+
+    private void handleClient(Socket clientSocket) {
+        try (clientSocket) {
+            serviceHandler.handle(clientSocket);
+        } catch (Exception e) {
+            System.err.println("Error handling client");
+            e.printStackTrace();
         }
     }
 
