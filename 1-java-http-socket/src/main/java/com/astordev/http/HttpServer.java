@@ -1,6 +1,7 @@
 package com.astordev.http;
 
-import com.astordev.http.handler.ServiceHandler;
+import com.astordev.Server;
+import com.astordev.ServiceHandler;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -9,7 +10,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class HttpServer {
+public class HttpServer implements Server {
 
     private final int port;
     private final Map<String, ServiceHandler> serviceHandlers;
@@ -23,7 +24,7 @@ public class HttpServer {
 
     public void start() throws IOException {
         try (ServerSocket serverSocket = new ServerSocket(port)) {
-            System.out.println("Server started on port " + port);
+            System.out.println("HTTP Server started on port " + port);
 
             while (true) {
                 final Socket clientSocket = serverSocket.accept();
@@ -38,11 +39,9 @@ public class HttpServer {
         try (clientSocket) {
             HttpRequest request = new HttpRequest(clientSocket.getInputStream());
             HttpResponse response = new HttpResponse(clientSocket.getOutputStream());
-
             ServiceHandler handler = serviceHandlers.get(request.getRequestURI());
-
             if (handler != null) {
-                handler.handle(request, response);
+                handler.handle(clientSocket);
             } else {
                 response.sendError(404, "Not Found");
             }
