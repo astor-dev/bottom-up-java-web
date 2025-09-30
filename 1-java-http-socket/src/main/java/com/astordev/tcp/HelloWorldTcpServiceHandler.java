@@ -18,13 +18,15 @@ public class HelloWorldTcpServiceHandler implements ServiceHandler {
             byte[] buffer = new byte[1024];
             int bytesRead;
             while ((bytesRead = in.read(buffer)) != -1) {
-                System.out.println("Received: " + new String(buffer, 0, bytesRead));
+                System.out.println(
+                        "[" + socket.getInetAddress().getHostAddress() +
+                                "(" + socket.getPort() + ")]" +
+                                new String(buffer, 0, bytesRead));
                 out.write("Hello, World!".getBytes());
             }
             System.out.println("Connection Closed");
             socket.close();
         } catch (IOException e) {
-            // 연결 끊김 등 예외 처리
             System.err.println("Communication error: " + e.getMessage());
         } finally {
             if (socket != null && !socket.isClosed()) {
