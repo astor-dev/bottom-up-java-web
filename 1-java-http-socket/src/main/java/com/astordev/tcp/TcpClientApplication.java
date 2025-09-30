@@ -31,8 +31,15 @@ public class TcpClientApplication {
             serverReaderThread.start();
 
             String line;
+            // NOTE: 숫자를 입력하면 해당 숫자에 해당하는 KB 사이즈 데이터를 전송, 그 외에는 그대로 씀
             while ((line = commandLineReader.readLine()) != null) {
-                out.write(line.getBytes());
+                try {
+                    int kb = Integer.parseInt(line.trim());
+                    byte[] buffer = new byte[kb * 1024]; // KB 단위 버퍼 생성
+                    out.write(buffer);
+                } catch (NumberFormatException e) {
+                    out.write(line.getBytes());
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
