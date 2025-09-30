@@ -1,13 +1,13 @@
 package com.astordev.tcp;
 
-import com.astordev.ServiceHandler;
+import com.astordev.SocketHandler;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 
-public class HelloWorldTcpServiceHandler implements ServiceHandler {
+public class TcpSocketHandler implements SocketHandler {
 
     @Override
     public void handle(Socket socket) throws IOException {

@@ -7,6 +7,6 @@ application {
 }
 
 dependencies {
-    implementation("jakarta.servlet:jakarta.servlet-api:6.1.0")
+    implementation("jakarta.presentation:jakarta.presentation-api:6.1.0")
 }
 

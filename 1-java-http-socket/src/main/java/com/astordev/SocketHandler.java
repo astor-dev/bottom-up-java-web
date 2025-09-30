@@ -4,6 +4,6 @@ import java.io.IOException;
 import java.net.Socket;
 
 
-public interface ServiceHandler {
+public interface SocketHandler {
     void handle(Socket socket) throws IOException;
 }

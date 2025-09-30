@@ -1,7 +1,7 @@
 package com.astordev.tcp;
 
 import com.astordev.Server;
-import com.astordev.ServiceHandler;
+import com.astordev.SocketHandler;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -14,13 +14,13 @@ import java.util.concurrent.Executors;
 
 public class TcpServer implements Server {
     private final int port;
-    private final ServiceHandler serviceHandler;
+    private final SocketHandler serviceHandler;
     private final List<Socket> clientSockets = Collections.synchronizedList(new ArrayList<>());
     private final ExecutorService executorService = Executors.newCachedThreadPool();
     private ServerSocket serverSocket;
 
 
-    public TcpServer(int port, ServiceHandler serviceHandler) {
+    public TcpServer(int port, SocketHandler serviceHandler) {
         this.port = port;
         this.serviceHandler = serviceHandler;
         addShutdownHook();

@@ -1,24 +1,23 @@
 package com.astordev.http;
 
 import com.astordev.Server;
-import com.astordev.ServiceHandler;
+import com.astordev.SocketHandler;
 
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class HttpServer implements Server {
 
     private final int port;
-    private final Map<String, ServiceHandler> serviceHandlers;
+    private final SocketHandler serviceHandler;
     private final ExecutorService executorService = Executors.newCachedThreadPool();
 
-    public HttpServer(int port, Map<String, ServiceHandler> serviceHandlers) {
+    public HttpServer(int port, SocketHandler serviceHandlers) {
         this.port = port;
-        this.serviceHandlers = serviceHandlers;
+        this.serviceHandler = serviceHandlers;
     }
 
 
@@ -36,18 +35,19 @@ public class HttpServer implements Server {
     }
 
     private void handleClient(Socket clientSocket) {
-        try (clientSocket) {
-            HttpRequest request = new HttpRequest(clientSocket.getInputStream());
-            HttpResponse response = new HttpResponse(clientSocket.getOutputStream());
-            ServiceHandler handler = serviceHandlers.get(request.getRequestURI());
-            if (handler != null) {
-                handler.handle(clientSocket);
-            } else {
-                response.sendError(404, "Not Found");
-            }
+        try {
+            serviceHandler.handle(clientSocket);
         } catch (Exception e) {
             System.err.println("Error handling client");
             e.printStackTrace();
+        } finally {
+            try {
+                if (clientSocket != null && !clientSocket.isClosed()) {
+                    clientSocket.close();
+                }
+            } catch (IOException e) {
+                System.err.println("Error closing client socket: " + e.getMessage());
+            }
         }
     }
 }

@@ -1,28 +1,25 @@
 package com.astordev;
 
-import com.astordev.http.HelloWorldHttpServiceHandler;
+import com.astordev.http.HttpSocketHandler;
 import com.astordev.http.HttpServer;
-import com.astordev.tcp.HelloWorldTcpServiceHandler;
+import com.astordev.tcp.TcpSocketHandler;
 import com.astordev.tcp.TcpServer;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 class WebApplication {
-    private final static Mode mode = Mode.TCP;
+    private final static Mode mode = Mode.HTTP;
 
     public static void main(String[] args) {
         Server server = null;
 
         switch (mode) {
             case HTTP -> {
-                Map<String, ServiceHandler> handlers = new HashMap<>();
-                handlers.put("/hello", new HelloWorldHttpServiceHandler());
-                server = new HttpServer(8080, handlers);
+                SocketHandler handler = new HttpSocketHandler();
+                server = new HttpServer(8080, handler);
             }
             case TCP -> {
-                ServiceHandler handler = new HelloWorldTcpServiceHandler();
+                SocketHandler handler = new TcpSocketHandler();
                 server = new TcpServer(8080, handler);
             }
         }

@@ -37,7 +37,7 @@ public class ServletContainer {
                 initializer.onStartup(null, servletContext); // Passing null for Set<Class<?>> as we don't support it yet
             }
         } catch (Exception e) {
-            System.err.println("Error running servlet container initializers");
+            System.err.println("Error running presentation container initializers");
             e.printStackTrace();
         }
     }
@@ -50,13 +50,13 @@ public class ServletContainer {
                 if (registration instanceof CustomServletRegistration customRegistration) {
                     Class<? extends Servlet> servletClass = customRegistration.getServletClass();
 
-                    // Instantiate the servlet using reflection
+                    // Instantiate the presentation using reflection
                     Servlet servlet = servletClass.getDeclaredConstructor().newInstance();
 
-                    // Store the instantiated servlet in the context
+                    // Store the instantiated presentation in the context
                     servletContext.addInstantiatedServlet(servletName, servlet);
 
-                    // Initialize the servlet
+                    // Initialize the presentation
                     servlet.init(new CustomServletConfig(servletName, servletContext));
                 }
             }
