@@ -1,4 +1,4 @@
-package com.astordev.context;
+package com.astordev.was.container.context;
 
 import jakarta.servlet.ServletConfig;
 import jakarta.servlet.ServletContext;

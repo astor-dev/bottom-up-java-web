@@ -1,4 +1,4 @@
-package com.astordev.http;
+package com.astordev.was.container.http;
 
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletConnection;

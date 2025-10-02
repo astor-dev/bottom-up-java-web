@@ -8,6 +8,6 @@ plugins {
 }
 rootProject.name = "bottom-up-java-web"
 include("1-java-http-socket")
-include("2-presentation-impl")
+include("2-servlet-impl")
 include("3-tomcat")
 include("4-spring-mvc")

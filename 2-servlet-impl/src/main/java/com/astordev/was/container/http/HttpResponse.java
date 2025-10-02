@@ -1,4 +1,4 @@
-package com.astordev.http;
+package com.astordev.was.container.http;
 
 import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.Cookie;
