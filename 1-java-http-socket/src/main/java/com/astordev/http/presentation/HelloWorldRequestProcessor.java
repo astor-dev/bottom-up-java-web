@@ -8,9 +8,10 @@ import java.io.IOException;
 
 public class HelloWorldRequestProcessor implements RequestProcessor {
     @Override
-    public void process(HttpRequest request, HttpResponse response) throws IOException {
+    public void process(HttpRequest request, HttpResponse response) {
         response.setStatus(200);
         response.addHeader("Content-Type", "text/plain; charset=utf-8");
-        response.getWriter().println("Hello, World!");
+        response.getWriter().print("Hello, World!");
+        System.out.println("processed GET /hello");
     }
 }
