@@ -1,5 +1,6 @@
 package com.astordev.web.container.http;
 
+import com.astordev.web.container.connector.ConnectorOutputStream;
 import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
@@ -13,7 +14,7 @@ import java.util.function.Supplier;
 
 public class HttpResponse implements HttpServletResponse {
 
-    private final OutputStream outputStream;
+    private final ServletOutputStream servletOutputStream;
     private final Map<String, List<String>> headers = new HashMap<>();
     private PrintWriter writer;
     private int status = SC_OK;
@@ -21,12 +22,12 @@ public class HttpResponse implements HttpServletResponse {
     private boolean headersWritten = false;
 
     public HttpResponse(OutputStream outputStream) {
-        this.outputStream = outputStream;
+        this.servletOutputStream = new ConnectorOutputStream(outputStream);
     }
 
     private void writeHeaders() {
         if (!headersWritten) {
-            PrintWriter headerWriter = new PrintWriter(outputStream);
+            PrintWriter headerWriter = new PrintWriter(servletOutputStream);
             headerWriter.print("HTTP/1.1 " + status + " " + getStatusMessage(status) + "\r\n");
             headerWriter.print("Content-Type: " + contentType + "\r\n");
             for (Map.Entry<String, List<String>> entry : headers.entrySet()) {
@@ -52,10 +53,10 @@ public class HttpResponse implements HttpServletResponse {
     }
 
     @Override
-    public PrintWriter getWriter() {
+    public PrintWriter getWriter() throws IOException {
         if (writer == null) {
             writeHeaders();
-            writer = new PrintWriter(outputStream, true);
+            writer = new PrintWriter(servletOutputStream, true);
         }
         return writer;
     }
@@ -76,7 +77,7 @@ public class HttpResponse implements HttpServletResponse {
         if (writer != null) {
             writer.flush();
         }
-        outputStream.flush();
+        servletOutputStream.flush();
     }
 
     @Override
@@ -107,7 +108,7 @@ public class HttpResponse implements HttpServletResponse {
     }
 
     @Override
-    public void sendRedirect(String location) {
+    public void sendRedirect(String location) throws IOException {
         if (isCommitted()) {
             throw new IllegalStateException("Cannot send redirect after response is committed");
         }
@@ -117,7 +118,6 @@ public class HttpResponse implements HttpServletResponse {
         writeHeaders();
     }
 
-    // --- Unimplemented methods ---
     @Override
     public boolean containsHeader(String name) {
         return headers.containsKey(name);
@@ -147,8 +147,6 @@ public class HttpResponse implements HttpServletResponse {
     public void sendRedirect(String location, int sc) throws IOException {
         HttpServletResponse.super.sendRedirect(location, sc);
     }
-
-    // --- Unimplemented methods ---
 
     @Override
     public void sendRedirect(String location, int sc, boolean clearBuffer) {
@@ -210,23 +208,9 @@ public class HttpResponse implements HttpServletResponse {
     }
 
     @Override
-    public ServletOutputStream getOutputStream() {
+    public ServletOutputStream getOutputStream() throws IOException {
         writeHeaders();
-        return new ServletOutputStream() {
-            @Override
-            public void write(int b) throws IOException {
-                outputStream.write(b);
-            }
-
-            @Override
-            public boolean isReady() {
-                return true;
-            }
-
-            @Override
-            public void setWriteListener(jakarta.servlet.WriteListener writeListener) {
-            }
-        };
+        return this.servletOutputStream;
     }
 
     @Override

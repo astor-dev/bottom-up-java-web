@@ -1,5 +1,6 @@
 package com.astordev.web.container.http;
 
+import com.astordev.web.container.connector.ConnectorInputStream;
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletConnection;
 import jakarta.servlet.ServletInputStream;
@@ -24,11 +25,15 @@ public class HttpRequest implements HttpServletRequest {
     private final Map<String, String> headers = new HashMap<>();
     private final Map<String, String[]> parameters = new HashMap<>();
     private final Cookie[] cookies;
-    private final BufferedReader reader;
+    private final ServletInputStream servletInputStream;
+    private BufferedReader reader;
+    private boolean streamAccessed = false;
 
     public HttpRequest(InputStream inputStream) throws IOException {
-        this.reader = new BufferedReader(new InputStreamReader(inputStream));
-        String requestLine = reader.readLine();
+        this.servletInputStream = new ConnectorInputStream(inputStream);
+        BufferedReader headerReader = new BufferedReader(new InputStreamReader(this.servletInputStream, StandardCharsets.ISO_8859_1));
+
+        String requestLine = headerReader.readLine();
         if (requestLine == null || requestLine.isEmpty()) {
             throw new IOException("Invalid request line");
         }
@@ -48,7 +53,7 @@ public class HttpRequest implements HttpServletRequest {
         }
 
         String headerLine;
-        while ((headerLine = reader.readLine()) != null && !headerLine.isEmpty()) {
+        while ((headerLine = headerReader.readLine()) != null && !headerLine.isEmpty()) {
             String[] headerParts = headerLine.split(": ");
             if (headerParts.length == 2) {
                 headers.put(headerParts[0], headerParts[1]);
@@ -263,8 +268,12 @@ public class HttpRequest implements HttpServletRequest {
     }
 
     @Override
-    public ServletInputStream getInputStream() {
-        return null;
+    public ServletInputStream getInputStream() throws IOException {
+        if (reader != null) {
+            throw new IllegalStateException("getReader() has already been called for this request");
+        }
+        streamAccessed = true;
+        return this.servletInputStream;
     }
 
     @Override
@@ -288,7 +297,20 @@ public class HttpRequest implements HttpServletRequest {
     }
 
     @Override
-    public BufferedReader getReader() {
+    public BufferedReader getReader() throws IOException {
+        if (streamAccessed && reader == null) {
+            throw new IllegalStateException("getInputStream() has already been called for this request");
+        }
+        if (reader != null) {
+            return reader;
+        }
+
+        String encoding = getCharacterEncoding();
+        if (encoding == null) {
+            encoding = StandardCharsets.UTF_8.name();
+        }
+        this.reader = new BufferedReader(new InputStreamReader(this.servletInputStream, encoding));
+        streamAccessed = true;
         return this.reader;
     }
 
