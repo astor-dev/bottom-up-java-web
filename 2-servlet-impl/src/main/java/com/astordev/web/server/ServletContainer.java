@@ -1,9 +1,9 @@
-package com.astordev.was.server;
+package com.astordev.web.server;
 
-import com.astordev.was.connector.BioConnector;
-import com.astordev.was.container.context.CustomServletConfig;
-import com.astordev.was.container.context.CustomServletContext;
-import com.astordev.was.container.context.CustomServletRegistration;
+import com.astordev.web.connector.BioConnector;
+import com.astordev.web.container.context.CustomServletConfig;
+import com.astordev.web.container.context.CustomServletContext;
+import com.astordev.web.container.context.CustomServletRegistration;
 import jakarta.servlet.Servlet;
 import jakarta.servlet.ServletRegistration;
 

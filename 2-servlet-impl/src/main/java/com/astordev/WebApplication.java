@@ -1,7 +1,7 @@
 package com.astordev;
 
-import com.astordev.was.server.Connector;
-import com.astordev.was.server.ServletContainer;
+import com.astordev.web.server.Connector;
+import com.astordev.web.server.ServletContainer;
 import com.astordev.servlet.HelloWorldServlet;
 
 import java.io.IOException;

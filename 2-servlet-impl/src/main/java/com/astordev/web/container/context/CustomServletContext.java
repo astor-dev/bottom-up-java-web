@@ -1,4 +1,4 @@
-package com.astordev.was.container.context;
+package com.astordev.web.container.context;
 
 import jakarta.servlet.*;
 import jakarta.servlet.descriptor.JspConfigDescriptor;

@@ -1,4 +1,4 @@
-package com.astordev.was.server;
+package com.astordev.web.server;
 
 import java.io.IOException;
 

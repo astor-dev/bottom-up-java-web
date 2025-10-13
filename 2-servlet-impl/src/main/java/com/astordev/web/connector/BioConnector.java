@@ -1,9 +1,9 @@
-package com.astordev.was.connector;
+package com.astordev.web.connector;
 
-import com.astordev.was.container.context.CustomServletContext;
-import com.astordev.was.container.http.HttpRequest;
-import com.astordev.was.container.http.HttpResponse;
-import com.astordev.was.server.Connector;
+import com.astordev.web.container.context.CustomServletContext;
+import com.astordev.web.container.http.HttpRequest;
+import com.astordev.web.container.http.HttpResponse;
+import com.astordev.web.server.Connector;
 import jakarta.servlet.Servlet;
 
 import java.io.IOException;
