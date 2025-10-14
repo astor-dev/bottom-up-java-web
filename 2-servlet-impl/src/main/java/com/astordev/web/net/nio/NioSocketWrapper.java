@@ -44,8 +44,22 @@ public class NioSocketWrapper extends SocketWrapperBase {
         return channel.isOpen() && key != null && key.isReadable();
     }
 
-    @Override
-    public int read(ByteBuffer buffer) throws IOException {
-        return channel.read(buffer);
+        @Override
+
+        public int read(ByteBuffer buffer) throws IOException {
+
+            return channel.read(buffer);
+
+        }
+
+    
+
+        public int write(ByteBuffer buffer) throws IOException {
+
+            return channel.write(buffer);
+
+        }
+
     }
-}
+
+    

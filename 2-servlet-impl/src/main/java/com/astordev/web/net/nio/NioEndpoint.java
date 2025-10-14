@@ -24,6 +24,7 @@ public class NioEndpoint extends AbstractEndpoint {
         serverChannel.register(selector, SelectionKey.OP_ACCEPT);
 
         executor.submit(() -> {
+            System.out.println("started Nio Server Socket Channel at port: " + port);
             while (!stopped) {
                 try {
                     selector.select(1000);
@@ -41,9 +42,17 @@ public class NioEndpoint extends AbstractEndpoint {
                                 executor.submit(() -> handler.process(wrapper));
                             }
                         } else if (key.isReadable()) {
+                            // Prevent the selector from firing again for this key while it's being processed.
+                            key.interestOps(0);
                             SocketChannel channel = (SocketChannel) key.channel();
                             SocketWrapperBase wrapper = new NioSocketWrapper(channel, key);
-                            executor.submit(() -> handler.process(wrapper));
+                            executor.submit(() -> {
+                                boolean keepAlive = handler.process(wrapper);
+                                if (keepAlive) {
+                                    key.interestOps(SelectionKey.OP_READ);
+                                    selector.wakeup();
+                                }
+                            });
                         }
                     }
                 } catch (IOException e) {

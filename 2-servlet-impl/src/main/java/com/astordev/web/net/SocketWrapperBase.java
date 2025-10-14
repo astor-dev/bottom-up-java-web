@@ -12,7 +12,12 @@ public abstract class SocketWrapperBase implements AutoCloseable {
     public boolean isReady() throws IOException {
         return true;
     }
-    public int read(ByteBuffer buffer) throws IOException {
-        throw new UnsupportedOperationException("Only for NIO");
+        public int read(ByteBuffer buffer) throws IOException {
+            throw new UnsupportedOperationException("Only for NIO");
+        }
+    
+        public int write(ByteBuffer buffer) throws IOException {
+            throw new UnsupportedOperationException("Only for NIO");
+        }
     }
-}
+    

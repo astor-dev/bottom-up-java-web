@@ -9,6 +9,15 @@ public class Request {
     private String requestURI;
     private final Map<String, String> headers = new ConcurrentHashMap<>();
     private String body;
+    private boolean keepAlive = true;
+
+    public boolean isKeepAlive() {
+        return keepAlive;
+    }
+
+    public void setKeepAlive(boolean keepAlive) {
+        this.keepAlive = keepAlive;
+    }
 
     public String getMethod() {
         return method;

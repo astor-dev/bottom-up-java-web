@@ -25,9 +25,9 @@ public class Http11Protocol extends ProtocolHandler {
     }
 
     @Override
-    public void process(SocketWrapperBase socketWrapper) {
+    public boolean process(SocketWrapperBase socketWrapper) {
         Http11Processor processor = new Http11Processor(socketWrapper, gateway);
-        processor.process();
+        return processor.process();
     }
 
     private void init() {
