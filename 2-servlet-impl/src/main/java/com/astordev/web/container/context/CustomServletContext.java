@@ -12,26 +12,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class CustomServletContext implements ServletContext {
 
-    private final Map<String, Servlet> servlets = new ConcurrentHashMap<>(); // For instantiated servlets
-    private final Map<String, String> servletMappings = new ConcurrentHashMap<>();
     private final Map<String, ServletRegistration> servletRegistrations = new ConcurrentHashMap<>();
     private final Map<String, Object> attributes = new ConcurrentHashMap<>();
 
-    public Servlet getServlet(String urlPattern) {
-        String servletName = servletMappings.get(urlPattern);
-        if (servletName == null) {
-            return null;
-        }
-        return servlets.get(servletName);
-    }
-
-    public void addInstantiatedServlet(String name, Servlet servlet) {
-        servlets.put(name, servlet);
-    }
-
-    public void addServletMapping(String servletName, String urlPattern) {
-        servletMappings.put(urlPattern, servletName);
-    }
 
     @Override
     public ServletRegistration.Dynamic addServlet(String servletName, Class<? extends Servlet> servletClass) {
@@ -45,7 +28,7 @@ public class CustomServletContext implements ServletContext {
             return null;
         }
 
-        CustomServletRegistration registration = new CustomServletRegistration(servletName, this, servletClass);
+        CustomServletRegistration registration = new CustomServletRegistration(servletName, servletClass);
         servletRegistrations.put(servletName, registration);
         return registration;
     }

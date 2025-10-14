@@ -1,73 +1,55 @@
 package com.astordev.web.container.http;
 
-import com.astordev.web.container.connector.ConnectorInputStream;
+import com.astordev.web.bridge.Request;
+import com.astordev.web.container.connector.BridgeInputStream;
+import com.astordev.web.container.connector.Connector;
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletConnection;
 import jakarta.servlet.ServletInputStream;
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.*;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 public class HttpRequest implements HttpServletRequest {
 
-    private final String method;
-    private final String requestURI;
+    private final Request request;
+    private final Connector connector;
+
     private final String queryString;
-    private final Map<String, String> headers = new HashMap<>();
     private final Map<String, String[]> parameters = new HashMap<>();
     private final Cookie[] cookies;
-    private final ServletInputStream servletInputStream;
+    private ServletInputStream servletInputStream;
     private BufferedReader reader;
     private boolean streamAccessed = false;
 
-    public HttpRequest(InputStream inputStream) throws IOException {
-        this.servletInputStream = new ConnectorInputStream(inputStream);
-        BufferedReader headerReader = new BufferedReader(new InputStreamReader(this.servletInputStream, StandardCharsets.ISO_8859_1));
+    public HttpRequest(Request request, Connector connector) {
+        this.request = request;
+        this.connector = connector;
 
-        String requestLine = headerReader.readLine();
-        if (requestLine == null || requestLine.isEmpty()) {
-            throw new IOException("Invalid request line");
-        }
-
-        String[] parts = requestLine.split(" ");
-        this.method = parts[0];
-        String uri = parts[1];
-
+        String uri = request.getRequestURI();
         int queryStringIndex = uri.indexOf('?');
         if (queryStringIndex != -1) {
-            this.requestURI = uri.substring(0, queryStringIndex);
             this.queryString = uri.substring(queryStringIndex + 1);
             parseParameters(this.queryString);
         } else {
-            this.requestURI = uri;
             this.queryString = null;
         }
 
-        String headerLine;
-        while ((headerLine = headerReader.readLine()) != null && !headerLine.isEmpty()) {
-            String[] headerParts = headerLine.split(": ");
-            if (headerParts.length == 2) {
-                headers.put(headerParts[0], headerParts[1]);
-            }
+        if ("POST".equalsIgnoreCase(getMethod()) && "application/x-www-form-urlencoded".equalsIgnoreCase(getContentType())) {
+            parseParameters(request.getBody());
         }
 
-        this.cookies = parseCookies(getHeader("Cookie"));
+        this.cookies = parseCookies(request.getHeader("Cookie"));
     }
 
-    private void parseParameters(String queryString) {
-        if (queryString == null || queryString.isEmpty()) {
+    private void parseParameters(String data) {
+        if (data == null || data.isEmpty()) {
             return;
         }
-        String[] pairs = queryString.split("&");
+        String[] pairs = data.split("&");
         for (String pair : pairs) {
             int idx = pair.indexOf("=");
             String key = idx > 0 ? URLDecoder.decode(pair.substring(0, idx), StandardCharsets.UTF_8) : pair;
@@ -99,15 +81,19 @@ public class HttpRequest implements HttpServletRequest {
         return cookieList.toArray(new Cookie[0]);
     }
 
-
     @Override
     public String getMethod() {
-        return this.method;
+        return this.request.getMethod();
     }
 
     @Override
     public String getRequestURI() {
-        return this.requestURI;
+        String uri = this.request.getRequestURI();
+        int queryStringIndex = uri.indexOf('?');
+        if (queryStringIndex != -1) {
+            return uri.substring(0, queryStringIndex);
+        }
+        return uri;
     }
 
     @Override
@@ -144,20 +130,20 @@ public class HttpRequest implements HttpServletRequest {
         return this.cookies;
     }
 
-
     @Override
     public String getHeader(String name) {
-        return headers.get(name);
+        return request.getHeader(name);
     }
 
     @Override
     public Enumeration<String> getHeaders(String name) {
-        return Collections.enumeration(headers.containsKey(name) ? Collections.singletonList(headers.get(name)) : Collections.emptyList());
+        String header = request.getHeader(name);
+        return Collections.enumeration(header != null ? Collections.singletonList(header) : Collections.emptyList());
     }
 
     @Override
     public Enumeration<String> getHeaderNames() {
-        return Collections.enumeration(headers.keySet());
+        return Collections.enumeration(request.getHeaders().keySet());
     }
 
     @Override
@@ -166,134 +152,20 @@ public class HttpRequest implements HttpServletRequest {
         return value != null ? Integer.parseInt(value) : -1;
     }
 
-    // --- Unimplemented methods ---
-
-    @Override
-    public String getPathInfo() {
-        return null;
-    }
-
-    @Override
-    public String getPathTranslated() {
-        return null;
-    }
-
-    @Override
-    public String getContextPath() {
-        return "";
-    }
-
-    @Override
-    public String getRemoteUser() {
-        return null;
-    }
-
-    @Override
-    public boolean isUserInRole(String role) {
-        return false;
-    }
-
-    @Override
-    public java.security.Principal getUserPrincipal() {
-        return null;
-    }
-
-    @Override
-    public String getRequestedSessionId() {
-        return null;
-    }
-
-    @Override
-    public HttpSession getSession(boolean create) {
-        return null;
-    }
-
-    @Override
-    public HttpSession getSession() {
-        return null;
-    }
-
-    @Override
-    public String changeSessionId() {
-        return null;
-    }
-
-    @Override
-    public boolean isRequestedSessionIdValid() {
-        return false;
-    }
-
-    @Override
-    public boolean isRequestedSessionIdFromCookie() {
-        return false;
-    }
-
-    @Override
-    public boolean isRequestedSessionIdFromURL() {
-        return false;
-    }
-
-    @Override
-    public Object getAttribute(String name) {
-        return null;
-    }
-
-    @Override
-    public Enumeration<String> getAttributeNames() {
-        return Collections.emptyEnumeration();
-    }
-
-    @Override
-    public String getCharacterEncoding() {
-        return "UTF-8";
-    }
-
-    @Override
-    public void setCharacterEncoding(String env) {
-    }
-
-    @Override
-    public int getContentLength() {
-        return -1;
-    }
-
-    @Override
-    public long getContentLengthLong() {
-        return -1;
-    }
-
-    @Override
-    public String getContentType() {
-        return null;
-    }
-
     @Override
     public ServletInputStream getInputStream() throws IOException {
         if (reader != null) {
             throw new IllegalStateException("getReader() has already been called for this request");
         }
+        if (servletInputStream == null) {
+            String body = request.getBody();
+            if (body == null) {
+                body = "";
+            }
+            servletInputStream = new BridgeInputStream(new ByteArrayInputStream(body.getBytes(StandardCharsets.UTF_8)));
+        }
         streamAccessed = true;
         return this.servletInputStream;
-    }
-
-    @Override
-    public String getProtocol() {
-        return "HTTP/1.1";
-    }
-
-    @Override
-    public String getScheme() {
-        return "http";
-    }
-
-    @Override
-    public String getServerName() {
-        return "localhost";
-    }
-
-    @Override
-    public int getServerPort() {
-        return 8080;
     }
 
     @Override
@@ -309,164 +181,136 @@ public class HttpRequest implements HttpServletRequest {
         if (encoding == null) {
             encoding = StandardCharsets.UTF_8.name();
         }
-        this.reader = new BufferedReader(new InputStreamReader(this.servletInputStream, encoding));
+        this.reader = new BufferedReader(new InputStreamReader(getInputStream(), encoding));
         streamAccessed = true;
         return this.reader;
     }
 
     @Override
-    public String getRemoteAddr() {
-        return null;
+    public String getContentType() {
+        return getHeader("Content-Type");
     }
 
     @Override
-    public String getRemoteHost() {
-        return null;
-    }
-
+    public String getPathInfo() { return null; }
     @Override
-    public void setAttribute(String name, Object o) {
-    }
-
+    public String getPathTranslated() { return null; }
     @Override
-    public void removeAttribute(String name) {
-    }
-
+    public String getContextPath() { return ""; }
     @Override
-    public java.util.Locale getLocale() {
-        return java.util.Locale.getDefault();
-    }
-
+    public String getRemoteUser() { return null; }
     @Override
-    public Enumeration<java.util.Locale> getLocales() {
-        return Collections.enumeration(Collections.singletonList(java.util.Locale.getDefault()));
-    }
-
+    public boolean isUserInRole(String role) { return false; }
     @Override
-    public boolean isSecure() {
-        return false;
-    }
-
+    public java.security.Principal getUserPrincipal() { return null; }
     @Override
-    public RequestDispatcher getRequestDispatcher(String path) {
-        return null;
-    }
-
+    public String getRequestedSessionId() { return null; }
     @Override
-    public int getRemotePort() {
-        return 0;
-    }
-
+    public HttpSession getSession(boolean create) { return null; }
     @Override
-    public String getLocalName() {
-        return null;
-    }
-
+    public HttpSession getSession() { return null; }
     @Override
-    public String getLocalAddr() {
-        return null;
-    }
-
+    public String changeSessionId() { return null; }
     @Override
-    public int getLocalPort() {
-        return 0;
-    }
-
+    public boolean isRequestedSessionIdValid() { return false; }
     @Override
-    public jakarta.servlet.ServletContext getServletContext() {
-        return null;
-    }
-
+    public boolean isRequestedSessionIdFromCookie() { return false; }
     @Override
-    public jakarta.servlet.AsyncContext startAsync() throws IllegalStateException {
-        return null;
-    }
-
+    public boolean isRequestedSessionIdFromURL() { return false; }
     @Override
-    public jakarta.servlet.AsyncContext startAsync(jakarta.servlet.ServletRequest servletRequest, jakarta.servlet.ServletResponse servletResponse) throws IllegalStateException {
-        return null;
-    }
-
+    public Object getAttribute(String name) { return null; }
     @Override
-    public boolean isAsyncStarted() {
-        return false;
-    }
-
+    public Enumeration<String> getAttributeNames() { return Collections.emptyEnumeration(); }
     @Override
-    public boolean isAsyncSupported() {
-        return false;
-    }
-
+    public String getCharacterEncoding() { return "UTF-8"; }
     @Override
-    public jakarta.servlet.AsyncContext getAsyncContext() {
-        return null;
-    }
-
+    public void setCharacterEncoding(String env) { }
     @Override
-    public jakarta.servlet.DispatcherType getDispatcherType() {
-        return jakarta.servlet.DispatcherType.REQUEST;
+    public int getContentLength() {
+        String contentLength = getHeader("Content-Length");
+        if (contentLength == null) {
+            return -1;
+        }
+        return Integer.parseInt(contentLength);
     }
-
     @Override
-    public String getRequestId() {
-        return "";
+    public long getContentLengthLong() {
+        String contentLength = getHeader("Content-Length");
+        if (contentLength == null) {
+            return -1L;
+        }
+        return Long.parseLong(contentLength);
     }
-
     @Override
-    public String getProtocolRequestId() {
-        return "";
-    }
-
+    public String getProtocol() { return connector.protocol; }
     @Override
-    public ServletConnection getServletConnection() {
-        return null;
-    }
-
+    public String getScheme() { return connector.scheme; }
     @Override
-    public String getAuthType() {
-        return null;
-    }
-
+    public String getServerName() { return "localhost"; }
     @Override
-    public long getDateHeader(String name) {
-        return -1;
-    }
-
+    public int getServerPort() { return connector.port; }
     @Override
-    public StringBuffer getRequestURL() {
-        return new StringBuffer(getScheme() + "://" + getServerName() + ":" + getServerPort() + getRequestURI());
-    }
-
+    public String getRemoteAddr() { return null; }
     @Override
-    public String getServletPath() {
-        return "";
-    }
-
+    public String getRemoteHost() { return null; }
     @Override
-    public jakarta.servlet.http.Part getPart(String name) {
-        return null;
-    }
-
+    public void setAttribute(String name, Object o) { }
     @Override
-    public java.util.Collection<jakarta.servlet.http.Part> getParts() {
-        return Collections.emptyList();
-    }
-
+    public void removeAttribute(String name) { }
     @Override
-    public boolean authenticate(HttpServletResponse response) {
-        return false;
-    }
-
+    public java.util.Locale getLocale() { return java.util.Locale.getDefault(); }
     @Override
-    public void login(String username, String password) {
-    }
-
+    public Enumeration<java.util.Locale> getLocales() { return Collections.enumeration(Collections.singletonList(java.util.Locale.getDefault())); }
     @Override
-    public void logout() {
-    }
-
+    public boolean isSecure() { return false; }
     @Override
-    public <T extends jakarta.servlet.http.HttpUpgradeHandler> T upgrade(Class<T> handlerClass) {
-        return null;
-    }
+    public RequestDispatcher getRequestDispatcher(String path) { return null; }
+    @Override
+    public int getRemotePort() { return 0; }
+    @Override
+    public String getLocalName() { return null; }
+    @Override
+    public String getLocalAddr() { return null; }
+    @Override
+    public int getLocalPort() { return 0; }
+    @Override
+    public jakarta.servlet.ServletContext getServletContext() { return null; }
+    @Override
+    public jakarta.servlet.AsyncContext startAsync() throws IllegalStateException { return null; }
+    @Override
+    public jakarta.servlet.AsyncContext startAsync(jakarta.servlet.ServletRequest servletRequest, jakarta.servlet.ServletResponse servletResponse) throws IllegalStateException { return null; }
+    @Override
+    public boolean isAsyncStarted() { return false; }
+    @Override
+    public boolean isAsyncSupported() { return false; }
+    @Override
+    public jakarta.servlet.AsyncContext getAsyncContext() { return null; }
+    @Override
+    public jakarta.servlet.DispatcherType getDispatcherType() { return jakarta.servlet.DispatcherType.REQUEST; }
+    @Override
+    public String getRequestId() { return ""; }
+    @Override
+    public String getProtocolRequestId() { return ""; }
+    @Override
+    public ServletConnection getServletConnection() { return null; }
+    @Override
+    public String getAuthType() { return null; }
+    @Override
+    public long getDateHeader(String name) { return -1; }
+    @Override
+    public StringBuffer getRequestURL() { return new StringBuffer(getScheme() + "://" + getServerName() + ":" + getServerPort() + getRequestURI()); }
+    @Override
+    public String getServletPath() { return ""; }
+    @Override
+    public jakarta.servlet.http.Part getPart(String name) { return null; }
+    @Override
+    public java.util.Collection<jakarta.servlet.http.Part> getParts() { return Collections.emptyList(); }
+    @Override
+    public boolean authenticate(HttpServletResponse response) { return false; }
+    @Override
+    public void login(String username, String password) { }
+    @Override
+    public void logout() { }
+    @Override
+    public <T extends jakarta.servlet.http.HttpUpgradeHandler> T upgrade(Class<T> handlerClass) { return null; }
 }

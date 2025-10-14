@@ -6,11 +6,11 @@ import jakarta.servlet.WriteListener;
 import java.io.IOException;
 import java.io.OutputStream;
 
-public class ConnectorOutputStream extends ServletOutputStream {
+public class BridgeOutputStream extends ServletOutputStream {
 
     private final OutputStream source;
 
-    public ConnectorOutputStream(OutputStream source) {
+    public BridgeOutputStream(OutputStream source) {
         this.source = source;
     }
 

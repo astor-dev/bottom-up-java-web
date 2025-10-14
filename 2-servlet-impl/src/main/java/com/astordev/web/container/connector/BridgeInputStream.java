@@ -6,11 +6,11 @@ import jakarta.servlet.ServletInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class ConnectorInputStream extends ServletInputStream {
+public class BridgeInputStream extends ServletInputStream {
 
     private final InputStream source;
 
-    public ConnectorInputStream(InputStream source) {
+    public BridgeInputStream(InputStream source) {
         this.source = source;
     }
 

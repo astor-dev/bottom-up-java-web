@@ -9,24 +9,18 @@ import java.util.*;
 public class CustomServletRegistration implements ServletRegistration.Dynamic {
 
     private final String name;
-    private final CustomServletContext servletContext;
     private final Class<? extends Servlet> servletClass;
     private final Set<String> mappings = new HashSet<>();
 
-    public CustomServletRegistration(String name, CustomServletContext servletContext, Class<? extends Servlet> servletClass) {
+    public CustomServletRegistration(String name, Class<? extends Servlet> servletClass) {
         this.name = name;
-        this.servletContext = servletContext;
         this.servletClass = servletClass;
     }
 
     @Override
     public Set<String> addMapping(String... urlPatterns) {
         Set<String> conflicts = new HashSet<>();
-        for (String urlPattern : urlPatterns) {
-            servletContext.addServletMapping(name, urlPattern);
-            mappings.add(urlPattern);
-        }
-        // In a real implementation, you'd check for conflicts
+        mappings.addAll(Arrays.asList(urlPatterns));
         return conflicts;
     }
 
