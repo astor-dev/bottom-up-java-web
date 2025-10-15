@@ -1,73 +1,39 @@
 package com.astordev.web.server;
 
 import com.astordev.web.bridge.Protocol;
-import com.astordev.web.container.ServletMapper;
 import com.astordev.web.container.connector.Connector;
+import com.astordev.web.container.context.Context;
 import com.astordev.web.net.Endpoint;
-import com.astordev.web.container.context.CustomServletConfig;
-import com.astordev.web.container.context.CustomServletContext;
-import com.astordev.web.container.context.CustomServletRegistration;
 import jakarta.servlet.Servlet;
-import jakarta.servlet.ServletRegistration;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 
 public class ServletContainer implements AutoCloseable {
 
-    private final CustomServletContext servletContext;
-    private List<Connector> connectors = new ArrayList<>();
-    private List<ConnectorConfig> connectorConfigs = new ArrayList<>();
-    private ServletMapper servletMapper;
+    private final Context context;
+    private final List<Connector> connectors = new ArrayList<>();
+    private final List<ConnectorConfig> connectorConfigs = new ArrayList<>();
     private CountDownLatch shutdownLatch;
 
     public ServletContainer() {
-        this.servletContext = new CustomServletContext();
-    }
-
-    public void addServlet(String servletName, Class<? extends Servlet> servletClass, String... urlPatterns) {
-        ServletRegistration.Dynamic registration = this.servletContext.addServlet(servletName, servletClass);
-        if (registration != null) {
-            registration.addMapping(urlPatterns);
-        } else {
-            System.err.println("Failed to register " + servletName);
-        }
+        this.context = new Context();
     }
 
     public void addConnector(int port, Endpoint.Type endpointType, Protocol protocol) {
         connectorConfigs.add(new ConnectorConfig(port, endpointType, protocol));
     }
 
-    private void initServlets() {
-        try {
-            Map<String, Servlet> instantiatedServlets = new ConcurrentHashMap<>();
-            for (ServletRegistration registration : servletContext.getServletRegistrations().values()) {
-                String servletName = registration.getName();
-
-                if (registration instanceof CustomServletRegistration customRegistration) {
-                    Class<? extends Servlet> servletClass = customRegistration.getServletClass();
-
-                    Servlet servlet = servletClass.getDeclaredConstructor().newInstance();
-                    instantiatedServlets.put(servletName, servlet);
-
-                    servlet.init(new CustomServletConfig(servletName, servletContext));
-                }
-            }
-            this.servletMapper = new ServletMapper(this.servletContext, instantiatedServlets);
-        } catch (Exception e) {
-            System.err.println("Servlet initialization failed");
-            e.printStackTrace();
-        }
+    public void addServlet(String servletName, Class<? extends Servlet> servletClass, String... urlPatterns) {
+        this.context.addServlet(servletName, servletClass, urlPatterns);
     }
 
     public void start() {
-        initServlets();
+        context.initServlets();
         shutdownLatch = new CountDownLatch(1);
         for (ConnectorConfig config : connectorConfigs) {
-            Connector connector = new Connector(config.protocol, this, servletMapper, config.port, config.endpointType);
+            Connector connector = new Connector(config.protocol, this, context.getServletMapper(), config.port, config.endpointType);
             connectors.add(connector);
         }
         try {
