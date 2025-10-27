@@ -1,5 +1,6 @@
 package com.astordev.web.container.context;
 
+import com.astordev.web.container.filter.CustomFilterRegistration;
 import jakarta.servlet.*;
 import jakarta.servlet.descriptor.JspConfigDescriptor;
 
@@ -14,6 +15,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class CustomServletContext implements ServletContext {
 
     private final Map<String, ServletRegistration> servletRegistrations = new ConcurrentHashMap<>();
+    private final Map<String, FilterRegistration> filterRegistrations = new ConcurrentHashMap<>();
     private final Map<String, Object> attributes = new ConcurrentHashMap<>();
     private final List<EventListener> listeners = new CopyOnWriteArrayList<>();
 
@@ -202,32 +204,58 @@ public class CustomServletContext implements ServletContext {
 
     @Override
     public FilterRegistration.Dynamic addFilter(String filterName, String className) {
-        throw new UnsupportedOperationException();
+        try {
+            Class<? extends Filter> filterClass = (Class<? extends Filter>) getClassLoader().loadClass(className);
+            return addFilter(filterName, filterClass);
+        } catch (ClassNotFoundException | ClassCastException e) {
+            throw new IllegalArgumentException("Invalid filter class: " + className, e);
+        }
     }
 
     @Override
     public FilterRegistration.Dynamic addFilter(String filterName, Filter filter) {
-        throw new UnsupportedOperationException();
+        if (filterName == null || filterName.isEmpty()) {
+            throw new IllegalArgumentException("Filter name cannot be null or empty");
+        }
+        if (filterRegistrations.containsKey(filterName)) {
+            return null;
+        }
+        // We can't get the class properly from an instance, so this is limited.
+        // Usually, this method is for filters defined programmatically outside the web-app classloader.
+        // For simplicity, we'll use a custom registration that holds the instance.
+        throw new UnsupportedOperationException("Adding filter by instance is not fully supported.");
     }
 
     @Override
     public FilterRegistration.Dynamic addFilter(String filterName, Class<? extends Filter> filterClass) {
-        throw new UnsupportedOperationException();
+        if (filterName == null || filterName.isEmpty()) {
+            throw new IllegalArgumentException("Filter name cannot be null or empty");
+        }
+        if (filterRegistrations.containsKey(filterName)) {
+            return null;
+        }
+        CustomFilterRegistration registration = new CustomFilterRegistration(filterName, filterClass);
+        filterRegistrations.put(filterName, registration);
+        return registration;
     }
 
     @Override
     public <T extends Filter> T createFilter(Class<T> clazz) throws ServletException {
-        throw new UnsupportedOperationException();
+        try {
+            return clazz.getDeclaredConstructor().newInstance();
+        } catch (Exception e) {
+            throw new ServletException("Failed to create filter: " + clazz.getName(), e);
+        }
     }
 
     @Override
     public FilterRegistration getFilterRegistration(String filterName) {
-        throw new UnsupportedOperationException();
+        return filterRegistrations.get(filterName);
     }
 
     @Override
     public Map<String, ? extends FilterRegistration> getFilterRegistrations() {
-        throw new UnsupportedOperationException();
+        return Collections.unmodifiableMap(filterRegistrations);
     }
 
     @Override

@@ -5,6 +5,8 @@ import com.astordev.web.bridge.Request;
 import com.astordev.web.bridge.Response;
 import com.astordev.web.container.ServletMapper;
 import com.astordev.web.container.context.Context;
+import com.astordev.web.container.filter.ApplicationFilterChain;
+import com.astordev.web.container.filter.FilterMapper;
 import com.astordev.web.container.http.HttpRequest;
 import com.astordev.web.container.http.HttpResponse;
 import jakarta.servlet.*;
@@ -12,16 +14,19 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 import java.util.EventListener;
+import java.util.List;
 
 public class BridgeGateway implements Gateway {
     private final Context context;
-    private final ServletMapper mapper;
+    private final ServletMapper servletMapper;
+    private final FilterMapper filterMapper;
     private final Connector connector;
 
 
     public BridgeGateway(Context context, Connector connector) {
         this.context = context;
-        this.mapper = context.getServletMapper();
+        this.servletMapper = context.getServletMapper();
+        this.filterMapper = context.getFilterMapper();
         this.connector = connector;
     }
 
@@ -35,9 +40,13 @@ public class BridgeGateway implements Gateway {
 
         try {
             String requestURI = request.getRequestURI();
-            Servlet servlet = mapper.map(requestURI);
+            Servlet servlet = servletMapper.map(requestURI);
+            List<Filter> filters = filterMapper.getMatchingFilters(requestURI);
+
+            ApplicationFilterChain filterChain = new ApplicationFilterChain(filters, servlet);
+            filterChain.doFilter(httpRequest, httpResponse);
+
             if (servlet != null) {
-                servlet.service(httpRequest, httpResponse);
                 httpResponse.flushBuffer();
             } else {
                 httpResponse.sendError(HttpServletResponse.SC_NOT_FOUND, "Not Found");

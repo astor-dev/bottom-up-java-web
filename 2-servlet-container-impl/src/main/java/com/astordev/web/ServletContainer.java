@@ -4,6 +4,7 @@ import com.astordev.web.bridge.Protocol;
 import com.astordev.web.container.connector.Connector;
 import com.astordev.web.container.context.Context;
 import com.astordev.web.net.Endpoint;
+import jakarta.servlet.Filter;
 import jakarta.servlet.Servlet;
 import jakarta.servlet.ServletContextEvent;
 import jakarta.servlet.ServletContextListener;
@@ -36,8 +37,12 @@ public class ServletContainer implements AutoCloseable {
         this.context.addServlet(servletName, servletClass, urlPatterns);
     }
 
+    public void addFilter(String filterName, Class<? extends Filter> filterClass, String... urlPatterns) {
+        this.context.addFilter(filterName, filterClass, urlPatterns);
+    }
+
     public void start() {
-        context.initServlets();
+        context.init();
         fireContextInitializedEvent();
         shutdownLatch = new CountDownLatch(1);
         for (ConnectorConfig config : connectorConfigs) {
@@ -73,7 +78,7 @@ public class ServletContainer implements AutoCloseable {
     @Override
     public void close() throws Exception {
         fireContextDestroyedEvent();
-        context.destroyServlets();
+        context.destroy();
         for (Connector connector : connectors) {
             connector.close();
         }
