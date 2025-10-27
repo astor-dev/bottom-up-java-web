@@ -1,7 +1,9 @@
 package com.astordev.web.container.context;
 
 import com.astordev.web.container.ServletMapper;
+import com.astordev.web.container.session.SessionManager;
 import jakarta.servlet.Servlet;
+import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletRegistration;
 
 import java.util.EventListener;
@@ -10,11 +12,17 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class Context {
     private final CustomServletContext servletContext;
+    private final SessionManager sessionManager;
     private ServletMapper servletMapper;
     private final Map<String, Servlet> instantiatedServlets = new ConcurrentHashMap<>();
 
     public Context() {
         this.servletContext = new CustomServletContext();
+        this.sessionManager = new SessionManager(this);
+    }
+
+    public SessionManager getSessionManager() {
+        return sessionManager;
     }
 
     public ServletMapper getServletMapper() {

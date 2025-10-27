@@ -27,8 +27,9 @@ public class BridgeGateway implements Gateway {
 
     @Override
     public void service(Request request, Response response)  {
-        HttpRequest httpRequest = connector.createRequest(request);
+        HttpRequest httpRequest = connector.createRequest(request, context);
         HttpResponse httpResponse = connector.createResponse(response);
+        httpRequest.setResponse(httpResponse);
 
         fireRequestInitializedEvent(httpRequest);
 

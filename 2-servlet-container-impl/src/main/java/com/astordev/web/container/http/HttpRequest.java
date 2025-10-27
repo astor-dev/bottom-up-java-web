@@ -3,8 +3,10 @@ package com.astordev.web.container.http;
 import com.astordev.web.bridge.Request;
 import com.astordev.web.container.connector.BridgeInputStream;
 import com.astordev.web.container.connector.Connector;
+import com.astordev.web.container.context.Context;
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletConnection;
+import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletInputStream;
 import jakarta.servlet.http.*;
 
@@ -17,6 +19,11 @@ public class HttpRequest implements HttpServletRequest {
 
     private final Request request;
     private final Connector connector;
+    private final Context context;
+    private HttpResponse response;
+    private HttpSession session;
+    private String requestedSessionId;
+    private boolean requestedSessionIdFromCookie;
 
     private final String queryString;
     private final Map<String, String[]> parameters = new HashMap<>();
@@ -25,9 +32,10 @@ public class HttpRequest implements HttpServletRequest {
     private BufferedReader reader;
     private boolean streamAccessed = false;
 
-    public HttpRequest(Request request, Connector connector) {
+    public HttpRequest(Request request, Connector connector, Context context) {
         this.request = request;
         this.connector = connector;
+        this.context = context;
 
         String uri = request.getRequestURI();
         int queryStringIndex = uri.indexOf('?');
@@ -43,6 +51,19 @@ public class HttpRequest implements HttpServletRequest {
         }
 
         this.cookies = parseCookies(request.getHeader("Cookie"));
+        if (this.cookies != null) {
+            for (Cookie cookie : this.cookies) {
+                if ("JSESSIONID".equals(cookie.getName())) {
+                    this.requestedSessionId = cookie.getValue();
+                    this.requestedSessionIdFromCookie = true;
+                    break;
+                }
+            }
+        }
+    }
+
+    public void setResponse(HttpResponse response) {
+        this.response = response;
     }
 
     private void parseParameters(String data) {
@@ -204,17 +225,31 @@ public class HttpRequest implements HttpServletRequest {
     @Override
     public java.security.Principal getUserPrincipal() { return null; }
     @Override
-    public String getRequestedSessionId() { return null; }
+    public String getRequestedSessionId() { return this.requestedSessionId; }
     @Override
-    public HttpSession getSession(boolean create) { return null; }
+    public HttpSession getSession(boolean create) {
+        if (session != null && ((com.astordev.web.container.session.CustomHttpSession) session).isValid()) {
+            return session;
+        }
+
+        session = context.getSessionManager().findSession(requestedSessionId);
+
+        if (session == null && create) {
+            session = context.getSessionManager().createSession(this.response);
+        }
+
+        return session;
+    }
     @Override
-    public HttpSession getSession() { return null; }
+    public HttpSession getSession() { return getSession(true); }
     @Override
     public String changeSessionId() { return null; }
     @Override
-    public boolean isRequestedSessionIdValid() { return false; }
+    public boolean isRequestedSessionIdValid() {
+        return context.getSessionManager().findSession(requestedSessionId) != null;
+    }
     @Override
-    public boolean isRequestedSessionIdFromCookie() { return false; }
+    public boolean isRequestedSessionIdFromCookie() { return this.requestedSessionIdFromCookie; }
     @Override
     public boolean isRequestedSessionIdFromURL() { return false; }
     @Override
@@ -271,10 +306,9 @@ public class HttpRequest implements HttpServletRequest {
     public String getLocalName() { return null; }
     @Override
     public String getLocalAddr() { return null; }
-    @Override
     public int getLocalPort() { return 0; }
     @Override
-    public jakarta.servlet.ServletContext getServletContext() { return null; }
+    public ServletContext getServletContext() { return context.getServletContext(); }
     @Override
     public jakarta.servlet.AsyncContext startAsync() throws IllegalStateException { return null; }
     @Override

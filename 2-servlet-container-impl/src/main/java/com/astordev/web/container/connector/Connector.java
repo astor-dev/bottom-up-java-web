@@ -28,8 +28,8 @@ public class Connector implements AutoCloseable{
         }
     }
 
-    public HttpRequest createRequest(Request request) {
-        return new HttpRequest(request, this);
+    public HttpRequest createRequest(Request request, Context context) {
+        return new HttpRequest(request, this, context);
     }
 
     public HttpResponse createResponse(Response response) {
