@@ -2,15 +2,16 @@ package com.astordev.web.container.context;
 
 import com.astordev.web.container.ServletMapper;
 import jakarta.servlet.Servlet;
-import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletRegistration;
 
+import java.util.EventListener;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Context {
-    private final ServletContext servletContext;
+    private final CustomServletContext servletContext;
     private ServletMapper servletMapper;
+    private final Map<String, Servlet> instantiatedServlets = new ConcurrentHashMap<>();
 
     public Context() {
         this.servletContext = new CustomServletContext();
@@ -29,9 +30,16 @@ public class Context {
         }
     }
 
+    public void addListener(Class<? extends EventListener> listenerClass) {
+        servletContext.addListener(listenerClass);
+    }
+
+    public CustomServletContext getServletContext() {
+        return servletContext;
+    }
+
     public void initServlets() {
         try {
-            Map<String, Servlet> instantiatedServlets = new ConcurrentHashMap<>();
             for (ServletRegistration registration : servletContext.getServletRegistrations().values()) {
                 String servletName = registration.getName();
 
@@ -48,6 +56,17 @@ public class Context {
         } catch (Exception e) {
             System.err.println("Servlet initialization failed");
             e.printStackTrace();
+        }
+    }
+
+    public void destroyServlets() {
+        for (Servlet servlet : instantiatedServlets.values()) {
+            try {
+                servlet.destroy();
+            } catch (Exception e) {
+                System.err.println("Servlet destruction failed for " + servlet.getClass().getName());
+                e.printStackTrace();
+            }
         }
     }
 }

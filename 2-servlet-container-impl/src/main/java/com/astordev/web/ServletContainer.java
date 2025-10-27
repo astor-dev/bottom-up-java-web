@@ -1,12 +1,15 @@
-package com.astordev.web.server;
+package com.astordev.web;
 
 import com.astordev.web.bridge.Protocol;
 import com.astordev.web.container.connector.Connector;
 import com.astordev.web.container.context.Context;
 import com.astordev.web.net.Endpoint;
 import jakarta.servlet.Servlet;
+import jakarta.servlet.ServletContextEvent;
+import jakarta.servlet.ServletContextListener;
 
 import java.util.ArrayList;
+import java.util.EventListener;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
@@ -25,15 +28,20 @@ public class ServletContainer implements AutoCloseable {
         connectorConfigs.add(new ConnectorConfig(port, endpointType, protocol));
     }
 
+    public void addListener(Class<? extends EventListener> listenerClass) {
+        this.context.addListener(listenerClass);
+    }
+
     public void addServlet(String servletName, Class<? extends Servlet> servletClass, String... urlPatterns) {
         this.context.addServlet(servletName, servletClass, urlPatterns);
     }
 
     public void start() {
         context.initServlets();
+        fireContextInitializedEvent();
         shutdownLatch = new CountDownLatch(1);
         for (ConnectorConfig config : connectorConfigs) {
-            Connector connector = new Connector(config.protocol, this, context.getServletMapper(), config.port, config.endpointType);
+            Connector connector = new Connector(config.protocol, this, context, config.port, config.endpointType);
             connectors.add(connector);
         }
         try {
@@ -44,8 +52,28 @@ public class ServletContainer implements AutoCloseable {
         }
     }
 
+    private void fireContextInitializedEvent() {
+        ServletContextEvent event = new ServletContextEvent(context.getServletContext());
+        for (EventListener listener : context.getServletContext().getListeners()) {
+            if (listener instanceof ServletContextListener) {
+                ((ServletContextListener) listener).contextInitialized(event);
+            }
+        }
+    }
+
+    private void fireContextDestroyedEvent() {
+        ServletContextEvent event = new ServletContextEvent(context.getServletContext());
+        for (EventListener listener : context.getServletContext().getListeners()) {
+            if (listener instanceof ServletContextListener) {
+                ((ServletContextListener) listener).contextDestroyed(event);
+            }
+        }
+    }
+
     @Override
     public void close() throws Exception {
+        fireContextDestroyedEvent();
+        context.destroyServlets();
         for (Connector connector : connectors) {
             connector.close();
         }

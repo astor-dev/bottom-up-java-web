@@ -9,12 +9,18 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class CustomServletContext implements ServletContext {
 
     private final Map<String, ServletRegistration> servletRegistrations = new ConcurrentHashMap<>();
     private final Map<String, Object> attributes = new ConcurrentHashMap<>();
+    private final List<EventListener> listeners = new CopyOnWriteArrayList<>();
 
+
+    public List<EventListener> getListeners() {
+        return listeners;
+    }
 
     @Override
     public ServletRegistration.Dynamic addServlet(String servletName, Class<? extends Servlet> servletClass) {
@@ -246,22 +252,35 @@ public class CustomServletContext implements ServletContext {
 
     @Override
     public void addListener(String className) {
-        throw new UnsupportedOperationException();
+        try {
+            Class<?> clazz = getClassLoader().loadClass(className);
+            addListener((Class<? extends EventListener>) clazz);
+        } catch (ClassNotFoundException | ClassCastException e) {
+            throw new IllegalArgumentException("Failed to add listener: " + className, e);
+        }
     }
 
     @Override
     public <T extends EventListener> void addListener(T t) {
-        throw new UnsupportedOperationException();
+        listeners.add(t);
     }
 
     @Override
     public void addListener(Class<? extends EventListener> listenerClass) {
-        throw new UnsupportedOperationException();
+        try {
+            listeners.add(createListener(listenerClass));
+        } catch (ServletException e) {
+            throw new IllegalArgumentException("Failed to add listener: " + listenerClass.getName(), e);
+        }
     }
 
     @Override
     public <T extends EventListener> T createListener(Class<T> clazz) throws ServletException {
-        throw new UnsupportedOperationException();
+        try {
+            return clazz.getDeclaredConstructor().newInstance();
+        } catch (Exception e) {
+            throw new ServletException("Failed to create listener: " + clazz.getName(), e);
+        }
     }
 
     @Override

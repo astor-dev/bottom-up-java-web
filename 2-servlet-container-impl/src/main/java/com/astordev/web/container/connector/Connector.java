@@ -2,11 +2,11 @@ package com.astordev.web.container.connector;
 
 import com.astordev.web.bridge.*;
 import com.astordev.web.bridge.http11.Http11Protocol;
-import com.astordev.web.container.ServletMapper;
+import com.astordev.web.container.context.Context;
 import com.astordev.web.container.http.HttpRequest;
 import com.astordev.web.container.http.HttpResponse;
 import com.astordev.web.net.Endpoint;
-import com.astordev.web.server.ServletContainer;
+import com.astordev.web.ServletContainer;
 
 public class Connector implements AutoCloseable{
     private final Gateway gateway;
@@ -15,8 +15,8 @@ public class Connector implements AutoCloseable{
     public final String protocol;
     public final String scheme;
 
-    public Connector(Protocol protocol, ServletContainer servletContainer, ServletMapper servletMapper, int port, Endpoint.Type type) {
-        this.gateway = new BridgeGateway(servletMapper, this);
+    public Connector(Protocol protocol, ServletContainer servletContainer, Context context, int port, Endpoint.Type type) {
+        this.gateway = new BridgeGateway(context, this);
         this.port = port;
         switch (protocol) {
             case HTTP11 -> {

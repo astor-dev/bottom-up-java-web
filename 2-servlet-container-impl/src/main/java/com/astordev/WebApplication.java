@@ -2,7 +2,7 @@ package com.astordev;
 
 import com.astordev.web.bridge.Protocol;
 import com.astordev.web.net.Endpoint;
-import com.astordev.web.server.ServletContainer;
+import com.astordev.web.ServletContainer;
 import com.astordev.servlet.HelloWorldServlet;
 
 public class WebApplication {
