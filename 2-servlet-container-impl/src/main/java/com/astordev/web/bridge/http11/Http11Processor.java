@@ -26,37 +26,20 @@ public class Http11Processor {
     
 
         public boolean process() {
-
             Request request = new Request();
-
             Response response = new Response();
 
-    
-
             try {
-
                 parseRequest(request);
-
-                System.out.println("[" + request.getMethod() + " " + request.getRequestURI() + "]");
-
                 gateway.service(request, response);
-
                 sendResponse(response, request.isKeepAlive());
-
             } catch (Exception e) {
-
                 response.setStatus(500);
-
                 response.setBody("Internal Server Error");
-
                 try {
-
                     sendResponse(response, false); // 에러 발생 시 커넥션은 닫음
-
                 } catch (IOException ignored) {}
-
                 e.printStackTrace();
-
                 request.setKeepAlive(false); // 에러 발생 시 커넥션은 닫음
 
             } finally {

@@ -1,6 +1,5 @@
 package com.astordev.web.container.context;
 
-import com.astordev.web.container.ServletMapper;
 import com.astordev.web.container.filter.CustomFilterConfig;
 import com.astordev.web.container.filter.CustomFilterRegistration;
 import com.astordev.web.container.filter.FilterMapper;

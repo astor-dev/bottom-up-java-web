@@ -1,4 +1,4 @@
-package com.astordev.web;
+package com.astordev.web.container;
 
 import com.astordev.web.bridge.Protocol;
 import com.astordev.web.container.connector.Connector;
@@ -46,7 +46,7 @@ public class ServletContainer implements AutoCloseable {
         fireContextInitializedEvent();
         shutdownLatch = new CountDownLatch(1);
         for (ConnectorConfig config : connectorConfigs) {
-            Connector connector = new Connector(config.protocol, this, context, config.port, config.endpointType);
+            Connector connector = new Connector(config.protocol, context, config.port, config.endpointType);
             connectors.add(connector);
         }
         try {

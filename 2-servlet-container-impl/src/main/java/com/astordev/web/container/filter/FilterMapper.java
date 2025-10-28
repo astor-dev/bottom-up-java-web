@@ -21,14 +21,26 @@ public class FilterMapper {
     public List<Filter> getMatchingFilters(String requestURI) {
         List<Filter> matchingFilters = new ArrayList<>();
         for (FilterRegistration registration : filterRegistrations.values()) {
-            // For now, only exact URL pattern matching is supported.
-            if (registration.getUrlPatternMappings().contains(requestURI)) {
-                Filter filter = instantiatedFilters.get(registration.getName());
-                if (filter != null) {
-                    matchingFilters.add(filter);
+            for (String pattern : registration.getUrlPatternMappings()) {
+                if (matches(pattern, requestURI)) {
+                    Filter filter = instantiatedFilters.get(registration.getName());
+                    if (filter != null) {
+                        matchingFilters.add(filter);
+                        break; // Move to the next registration once a match is found
+                    }
                 }
             }
         }
         return matchingFilters;
+    }
+
+    private boolean matches(String pattern, String requestURI) {
+        if (pattern.equals("/*")) {
+            return true;
+        }
+        if (pattern.startsWith("*.")) {
+            return requestURI.endsWith(pattern.substring(1));
+        }
+        return pattern.equals(requestURI);
     }
 }

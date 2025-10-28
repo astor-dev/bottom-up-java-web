@@ -3,7 +3,7 @@ package com.astordev.web.container.connector;
 import com.astordev.web.bridge.Gateway;
 import com.astordev.web.bridge.Request;
 import com.astordev.web.bridge.Response;
-import com.astordev.web.container.ServletMapper;
+import com.astordev.web.container.context.ServletMapper;
 import com.astordev.web.container.context.Context;
 import com.astordev.web.container.filter.ApplicationFilterChain;
 import com.astordev.web.container.filter.FilterMapper;
